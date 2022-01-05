@@ -1,5 +1,6 @@
 FROM jenkins/jenkins:lts
 USER root
+RUN apt-get update && apt-cache search readline
 RUN apt-get update && apt-get install -y build-essential bzip2 lib32readline7 lib32readline-dev make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl git jq libpq-dev
 USER jenkins
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
