@@ -3,30 +3,47 @@ name: Docker Image CI
 on:
   push:
     branches:
-      - '**'  # Matches all branches
+      - main
+      - master
+      - '**'  # still allow other branches
     tags:
       - '*'   # Matches all tags (used for releases)
   pull_request:
     branches:
-      - '**'  # Matches all branches
+      - '**'
   schedule:
-    - cron: '0 13 * * 1'  # Scheduled to run at 13:00 every Monday (UTC)
-  workflow_dispatch:  # Allows manual trigger
+    - cron: '0 13 * * 1'  # 13:00 every Monday UTC — note: schedule runs from default branch
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-
-  build:
-
+  build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-    - run: docker build . --file Dockerfile --tag jenkins:latest
-    - name: Dockerize
-      if: success()
-      uses: manusa/actions-publish-docker@v1.1.2
-      with:
-        name: virtualflybrain/jenkins
-        username: ${{ secrets.DOCKER_HUB_USER }}
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (if building multi-arch later)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            virtualflybrain/jenkins:latest
+            virtualflybrain/jenkins:${{ github.sha }}
+
+      - name: Verify image (optional)
+        run: docker run --rm virtualflybrain/jenkins:latest --version || true
