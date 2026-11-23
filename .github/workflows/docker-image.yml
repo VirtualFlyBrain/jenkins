@@ -47,3 +47,6 @@ jobs:
 
       - name: Verify image (optional)
         run: docker run --rm virtualflybrain/jenkins:latest --version || true
+
+      - name: Show bundled Java version
+        run: docker run --rm --entrypoint java virtualflybrain/jenkins:${{ github.sha }} -version
